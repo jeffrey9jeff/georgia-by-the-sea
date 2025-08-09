@@ -1,4 +1,4 @@
-const CACHE = 'georgia-v1';
+const CACHE = 'georgia-v2'; // was georgia-v1
 const ASSETS = [
   './',
   './index.html',
