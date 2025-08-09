@@ -4,21 +4,26 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 <title>Georgia by the Sea — Georgiaisms Game</title>
+
+<!-- iOS home-screen icon -->
 <link rel="apple-touch-icon" sizes="180x180" href="icons/icon-180.png">
+
+<!-- PWA -->
 <link rel="manifest" href="manifest.webmanifest">
 <meta name="theme-color" content="#9fd3ff">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
-<link rel="apple-touch-icon" href="icons/icon-192.png">
+
 <style>
   :root{
     --sand:#f6e8b1; --sea:#9fd3ff; --sky:#eaf6ff; --ui:#ffffffee; --ink:#1f2430;
     --accent:#ff7aa2; --towel:#ffd2e3;
+    --bottom-pad:110px; /* can be overridden in media queries */
   }
   *{box-sizing:border-box}
   html,body{height:100%;margin:0;background:linear-gradient(var(--sky),var(--sea) 40%,var(--sand) 40%);}
   body{font-family: ui-rounded, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, Apple Color Emoji, Noto Color Emoji, sans-serif; color:var(--ink);}
-    .wrap{max-width:920px;margin:0 auto;padding:8px 8px var(--bottom-pad,110px);display:grid;gap:8px}
+  .wrap{max-width:920px;margin:0 auto;padding:8px 8px var(--bottom-pad);display:grid;gap:8px}
   h1{font-size:clamp(20px,4vw,28px);margin:6px 0;text-align:center}
   #hud{
     display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center;
@@ -35,9 +40,12 @@
     radial-gradient(800px 400px at 50% 20%, #ffffff70, #ffffff00 60%)}
   #legend{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;font-size:14px;margin-top:4px}
   #legend span{background:#ffffffcc;border:1px solid #00000014;border-radius:999px;padding:4px 10px}
+
+  /* Mobile controls */
   #controls{
     position:fixed;left:0;right:0;bottom:8px;display:flex;justify-content:space-between;gap:8px;
-    padding:8px;max-width:920px;margin:0 auto
+    padding:8px;max-width:920px;margin:0 auto;
+    padding-bottom: calc(8px + env(safe-area-inset-bottom));
   }
   .pad{display:grid;grid-template-columns:repeat(3,56px);grid-template-rows:repeat(3,56px);gap:6px}
   .btn{
@@ -49,12 +57,14 @@
   .btn:active{transform:translateY(1px)}
   .btn.big{min-width:120px}
   .ghost{visibility:hidden}
+
   #modal{position:fixed;inset:0;background:#0009;display:none;align-items:center;justify-content:center;padding:16px}
   .card{background:#fff;border-radius:16px;max-width:720px;padding:18px 16px;box-shadow:0 20px 40px #0004}
   .card h2{margin:0 0 8px}
   .card p{margin:6px 0}
   .center{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:10px}
   .link{color:#0a67ff;text-decoration:none;font-weight:600}
+
   /* avatar badge */
   #avatarBadge{
     position:absolute;left:12px;top:12px;width:64px;height:64px;border-radius:50%;
@@ -63,27 +73,27 @@
   }
   #avatarBadge img{width:100%;height:100%;object-fit:cover}
   #avatarBadge .ph{font-size:32px}
+
   /* Keep controls off the content on small screens */
-@media (max-width: 420px) {
-  :root { --bottom-pad: 150px; }
-  .pad{ grid-template-columns:repeat(3,48px); grid-template-rows:repeat(3,48px); gap:6px; }
-  .btn{ min-width:48px; min-height:48px; }
-  .btn.big{ min-width:108px; }
-}
-@media (max-width: 360px) {
-  :root { --bottom-pad: 168px; }
-  .pad{ grid-template-columns:repeat(3,44px); grid-template-rows:repeat(3,44px); gap:6px; }
-  .btn{ min-width:44px; min-height:44px; }
-  .btn.big{ min-width:100px; }
-}
-/* Respect the iPhone safe-area at the bottom */
-#controls{ padding-bottom: calc(8px + env(safe-area-inset-bottom)); }
+  @media (max-width: 420px) {
+    :root { --bottom-pad: 150px; }
+    .pad{ grid-template-columns:repeat(3,48px); grid-template-rows:repeat(3,48px); gap:6px; }
+    .btn{ min-width:48px; min-height:48px; }
+    .btn.big{ min-width:108px; }
+  }
+  @media (max-width: 360px) {
+    :root { --bottom-pad: 168px; }
+    .pad{ grid-template-columns:repeat(3,44px); grid-template-rows:repeat(3,44px); gap:6px; }
+    .btn{ min-width:44px; min-height:44px; }
+    .btn.big{ min-width:100px; }
+  }
 </style>
 </head>
 <body>
   <div class="wrap">
-        <h1>Georgia by the Sea <span style="font-size:0.8em">— a Georgiaisms adventure</span></h1>
+    <h1>Georgia by the Sea <span style="font-size:0.8em">— a Georgiaisms adventure</span></h1>
 
+    <!-- How to play -->
     <div class="card" style="background:#ffffffee;border-radius:14px;padding:10px;box-shadow:0 8px 24px #0001">
       <h2 style="margin:6px 0 8px;font-size:18px">How to play</h2>
       <ul style="margin:0 0 6px 18px;padding:0;line-height:1.5">
@@ -229,7 +239,7 @@ document.getElementById('sound').addEventListener('click', async ()=>{
   document.getElementById('sound').textContent = on ? '🔊 Sound' : '🔇 Sound';
 });
 
-/* ===== Game (from earlier — now with photo avatar + sounds) ===== */
+/* ===== Game ===== */
 (() => {
   const DAY_SECONDS = 120;
   const WORLD = { w: 960, h: 540 };
@@ -341,8 +351,7 @@ document.getElementById('sound').addEventListener('click', async ()=>{
     if(keys.post && camIdeas>0){
       const boost = 20 + Math.round(Math.random()*25);
       followers+=boost; score+=12; camIdeas--; keys.post=false;
-      // 1 in 3 chance to say "thank q"
-      if(Math.random()<0.34) FX.thankq();
+      if(Math.random()<0.34) FX.thankq(); // sometimes say "thank q"
     }
 
     // UI
@@ -381,10 +390,8 @@ document.getElementById('sound').addEventListener('click', async ()=>{
       ctx.beginPath(); ctx.arc(PLAYER.x,PLAYER.y,r,0,Math.PI*2); ctx.closePath(); ctx.clip();
       ctx.drawImage(avatarImg, PLAYER.x-r, PLAYER.y-r, r*2, r*2);
       ctx.restore();
-      // outline
       ctx.strokeStyle='#2e3a48'; ctx.lineWidth=1.2; ctx.beginPath(); ctx.arc(PLAYER.x,PLAYER.y,r,0,Math.PI*2); ctx.stroke();
     } else {
-      // simple emoji fallback
       ctx.font='22px system-ui, Apple Color Emoji'; ctx.textAlign='center'; ctx.textBaseline='middle';
       ctx.fillText('😊', PLAYER.x, PLAYER.y);
     }
