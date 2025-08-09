@@ -1,11 +1,12 @@
-const CACHE = 'georgia-v2'; // was georgia-v1
+const CACHE = 'georgia-v2'; // bump when you change files
 const ASSETS = [
   './',
   './index.html',
   './manifest.webmanifest',
+  './icons/icon-180.png',
   './icons/icon-192.png',
   './icons/icon-512.png',
-  './assets/georgia-avatar.jpg' // optional; ok if missing
+  './assets/georgia-avatar.jpg' // optional; fine if missing
 ];
 
 self.addEventListener('install', e=>{
@@ -17,7 +18,6 @@ self.addEventListener('activate', e=>{
 self.addEventListener('fetch', e=>{
   e.respondWith(
     caches.match(e.request).then(r => r || fetch(e.request).then(resp=>{
-      // cache GET requests on the fly
       const copy = resp.clone();
       if (e.request.method === 'GET' && resp.status===200) {
         caches.open(CACHE).then(c=>c.put(e.request, copy));
