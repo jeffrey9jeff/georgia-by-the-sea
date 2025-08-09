@@ -1,0 +1,12 @@
+{
+  "name": "Georgia by the Sea — Georgiaisms Game",
+  "short_name": "Georgia",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#eaf6ff",
+  "theme_color": "#9fd3ff",
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}
