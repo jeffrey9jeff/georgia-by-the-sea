@@ -18,7 +18,7 @@
   *{box-sizing:border-box}
   html,body{height:100%;margin:0;background:linear-gradient(var(--sky),var(--sea) 40%,var(--sand) 40%);}
   body{font-family: ui-rounded, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, Apple Color Emoji, Noto Color Emoji, sans-serif; color:var(--ink);}
-  .wrap{max-width:920px;margin:0 auto;padding:8px 8px 110px;display:grid;gap:8px}
+    .wrap{max-width:920px;margin:0 auto;padding:8px 8px var(--bottom-pad,110px);display:grid;gap:8px}
   h1{font-size:clamp(20px,4vw,28px);margin:6px 0;text-align:center}
   #hud{
     display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center;
@@ -63,11 +63,37 @@
   }
   #avatarBadge img{width:100%;height:100%;object-fit:cover}
   #avatarBadge .ph{font-size:32px}
+  /* Keep controls off the content on small screens */
+@media (max-width: 420px) {
+  :root { --bottom-pad: 150px; }
+  .pad{ grid-template-columns:repeat(3,48px); grid-template-rows:repeat(3,48px); gap:6px; }
+  .btn{ min-width:48px; min-height:48px; }
+  .btn.big{ min-width:108px; }
+}
+@media (max-width: 360px) {
+  :root { --bottom-pad: 168px; }
+  .pad{ grid-template-columns:repeat(3,44px); grid-template-rows:repeat(3,44px); gap:6px; }
+  .btn{ min-width:44px; min-height:44px; }
+  .btn.big{ min-width:100px; }
+}
+/* Respect the iPhone safe-area at the bottom */
+#controls{ padding-bottom: calc(8px + env(safe-area-inset-bottom)); }
 </style>
 </head>
 <body>
   <div class="wrap">
-    <h1>Georgia by the Sea <span style="font-size:0.8em">— a Georgiaisms adventure</span></h1>
+        <h1>Georgia by the Sea <span style="font-size:0.8em">— a Georgiaisms adventure</span></h1>
+
+    <div class="card" style="background:#ffffffee;border-radius:14px;padding:10px;box-shadow:0 8px 24px #0001">
+      <h2 style="margin:6px 0 8px;font-size:18px">How to play</h2>
+      <ul style="margin:0 0 6px 18px;padding:0;line-height:1.5">
+        <li>Move: Arrow keys / WASD (mobile: on-screen arrows).</li>
+        <li>Nap: Hold Space (mobile: “Nap”) while on the pink towel to drop your <em>tie tie</em>.</li>
+        <li>Post: Press E (mobile: “Post”) when you’ve picked up a 📱 “TikTok idea”.</li>
+        <li>Collect: ☕️ (<em>cof cof</em>) wakes you up, 🍣 (<em>sush</em>), 🍧 (<em>Zoopy Doopy</em>), 🧀, 🍷 add Good-Times.</li>
+        <li>The day lasts 120s. Finish with max vibes, more followers, and minimum <em>tie tie</em>.</li>
+      </ul>
+    </div>
 
     <div id="hud">
       <div id="bars">
