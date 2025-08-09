@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>Georgia by the Sea — Georgiaisms Game</title>
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#9fd3ff">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<style>
+  :root{
+    --sand:#f6e8b1; --sea:#9fd3ff; --sky:#eaf6ff; --ui:#ffffffee; --ink:#1f2430;
+    --accent:#ff7aa2; --towel:#ffd2e3;
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%;margin:0;background:linear-gradient(var(--sky),var(--sea) 40%,var(--sand) 40%);}
+  body{font-family: ui-rounded, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, Apple Color Emoji, Noto Color Emoji, sans-serif; color:var(--ink);}
+  .wrap{max-width:920px;margin:0 auto;padding:8px 8px 110px;display:grid;gap:8px}
+  h1{font-size:clamp(20px,4vw,28px);margin:6px 0;text-align:center}
+  #hud{
+    display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center;
+    background:var(--ui);border-radius:14px;padding:10px;box-shadow:0 8px 24px #0000001f
+  }
+  #bars{display:grid;gap:6px}
+  .bar{height:14px;background:#0001;border-radius:999px;overflow:hidden;position:relative}
+  .fill{height:100%;background:linear-gradient(90deg,var(--accent),#ffa95b);width:0%}
+  .label{font-size:12px;opacity:.85;margin-bottom:2px}
+  #stats{display:flex;gap:10px;align-items:center;flex-wrap:wrap;font-size:14px}
+  #stats .pill{background:#0000000d;border:1px solid #0000001a;border-radius:999px;padding:6px 10px;display:flex;gap:6px;align-items:center}
+  #gameWrap{position:relative;background:linear-gradient(var(--sea),var(--sand) 55%);border-radius:16px;overflow:hidden;box-shadow:0 10px 26px #0002}
+  #canvas{display:block;width:100%;height:auto;aspect-ratio:16/9;background:
+    radial-gradient(800px 400px at 50% 20%, #ffffff70, #ffffff00 60%)}
+  #legend{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;font-size:14px;margin-top:4px}
+  #legend span{background:#ffffffcc;border:1px solid #00000014;border-radius:999px;padding:4px 10px}
+  #controls{
+    position:fixed;left:0;right:0;bottom:8px;display:flex;justify-content:space-between;gap:8px;
+    padding:8px;max-width:920px;margin:0 auto
+  }
+  .pad{display:grid;grid-template-columns:repeat(3,56px);grid-template-rows:repeat(3,56px);gap:6px}
+  .btn{
+    background:#ffffffdd;border:1px solid #0000001a;border-radius:12px;
+    display:flex;align-items:center;justify-content:center;user-select:none;
+    font-weight:600;min-width:56px;min-height:56px;touch-action:manipulation;
+    box-shadow:0 4px 10px #0001; backdrop-filter:saturate(140%) blur(4px)
+  }
+  .btn:active{transform:translateY(1px)}
+  .btn.big{min-width:120px}
+  .ghost{visibility:hidden}
+  #modal{position:fixed;inset:0;background:#0009;display:none;align-items:center;justify-content:center;padding:16px}
+  .card{background:#fff;border-radius:16px;max-width:720px;padding:18px 16px;box-shadow:0 20px 40px #0004}
+  .card h2{margin:0 0 8px}
+  .card p{margin:6px 0}
+  .center{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:10px}
+  .link{color:#0a67ff;text-decoration:none;font-weight:600}
+  /* avatar badge */
+  #avatarBadge{
+    position:absolute;left:12px;top:12px;width:64px;height:64px;border-radius:50%;
+    background:#fff;border:2px solid #0001;display:grid;place-items:center;overflow:hidden;
+    box-shadow:0 6px 16px #0002
+  }
+  #avatarBadge img{width:100%;height:100%;object-fit:cover}
+  #avatarBadge .ph{font-size:32px}
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>Georgia by the Sea <span style="font-size:0.8em">— a Georgiaisms adventure</span></h1>
+
+    <div id="hud">
+      <div id="bars">
+        <div class="label">Good-Times (score)</div>
+        <div class="bar"><div class="fill" id="scoreFill"></div></div>
+        <div class="label">Followers</div>
+        <div class="bar"><div class="fill" id="folFill" style="background:linear-gradient(90deg,#7bdaff,#6bd66b)"></div></div>
+        <div class="label">Tie Tie (sleepiness)</div>
+        <div class="bar"><div class="fill" id="sleepFill" style="background:linear-gradient(90deg,#ffcf5b,#ff6b6b)"></div></div>
+      </div>
+      <div id="stats">
+        <div class="pill">⏱ <span id="time">120</span>s</div>
+        <div class="pill">🎯 <span id="score">0</span></div>
+        <div class="pill">👥 <span id="followers">0</span></div>
+        <div class="pill">☕️ <span id="coffee">0</span></div>
+        <button id="sound" class="pill" title="Sound on/off">🔊 Sound</button>
+        <button id="install" class="pill" style="display:none">⬇️ Add to Home</button>
+      </div>
+    </div>
+
+    <div id="gameWrap">
+      <div id="avatarBadge" aria-hidden="true">
+        <img id="avatar" alt="" onerror="this.replaceWith(Object.assign(document.createElement('div'),{className:'ph',textContent:'😊'}))">
+      </div>
+      <canvas id="canvas" width="960" height="540" aria-label="Georgia by the Sea game canvas"></canvas>
+    </div>
+
+    <div id="legend">
+      <span>🧺 Nap towel (hold “Nap” to rest)</span>
+      <span>☕️ *cof cof* = wake up!</span>
+      <span>🥤 *coky coke* • 🍣 *sush* • 🧀 cheese • 🍷 wine • 🍧 Zoopy Doopy</span>
+      <span>📱 Film TikTok → followers</span>
+      <span>⭐ Don’t get too *tie tie*!</span>
+    </div>
+  </div>
+
+  <!-- Mobile controls -->
+  <div id="controls" aria-label="On-screen controls">
+    <div class="pad" aria-hidden="true">
+      <div class="ghost"></div>
+      <div class="btn" data-press="up">▲</div>
+      <div class="ghost"></div>
+      <div class="btn" data-press="left">◀</div>
+      <div class="btn" data-press="down">▼</div>
+      <div class="btn" data-press="right">▶</div>
+      <div class="ghost"></div>
+    </div>
+    <div style="display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap">
+      <div class="btn big" data-press="nap">💤 Nap</div>
+      <div class="btn big" data-press="post">📱 Post</div>
+    </div>
+  </div>
+
+  <!-- Modal / end-of-day -->
+  <div id="modal">
+    <div class="card">
+      <h2>Day in Coogee — Summary</h2>
+      <p>Good-Times: <b id="mScore">0</b></p>
+      <p>Followers gained: <b id="mFol">0</b></p>
+      <p>Coffees sipped (*cof cof*): <b id="mCof">0</b></p>
+      <p>Best Georgiaisms today: <span id="mQuips">“ushe”, “Zoopy Doopy”, “dunzo”</span></p>
+      <div class="center">
+        <button class="btn big" id="again">Play again</button>
+        <a class="btn big link" id="share" href="#">Share score</a>
+      </div>
+      <p style="margin-top:10px;opacity:.8">Tip: Nap when *tie tie*, then hunt for treats and make a TikTok. thank *q*!</p>
+    </div>
+  </div>
+
+<script>
+/* ===== PWA boot ===== */
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', ()=>navigator.serviceWorker.register('./sw.js'));
+}
+let deferredPrompt=null;
+window.addEventListener('beforeinstallprompt', (e)=>{ e.preventDefault(); deferredPrompt=e; const b=document.getElementById('install'); b.style.display='inline-flex'; b.onclick=async()=>{ if(!deferredPrompt)return; deferredPrompt.prompt(); await deferredPrompt.userChoice; deferredPrompt=null; b.style.display='none'; };});
+
+/* ===== Avatar ===== */
+(function loadAvatar(){
+  const img = document.getElementById('avatar');
+  img.src = 'assets/georgia-avatar.jpg'; // add this file to /assets
+})();
+
+/* ===== Sound engine (WebAudio) ===== */
+const FX = (()=> {
+  const ctx = new (window.AudioContext||window.webkitAudioContext)();
+  let enabled = false, oceanNode=null, oceanGain=null;
+
+  const env = (dur=0.15)=>{ const g=ctx.createGain(); g.gain.value=0; g.gain.linearRampToValueAtTime(0.8, ctx.currentTime+0.01); g.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime+dur); return g; }
+
+  function pop(){
+    if(!enabled) return;
+    const o = ctx.createOscillator(); o.type='triangle'; o.frequency.setValueAtTime(440, ctx.currentTime);
+    o.frequency.exponentialRampToValueAtTime(1400, ctx.currentTime+0.08);
+    const g = env(0.12); o.connect(g).connect(ctx.destination); o.start(); o.stop(ctx.currentTime+0.13);
+  }
+  function sip(){
+    if(!enabled) return;
+    const o = ctx.createOscillator(); o.type='sine'; o.frequency.setValueAtTime(260, ctx.currentTime);
+    const g = env(0.25); o.connect(g).connect(ctx.destination); o.start(); o.stop(ctx.currentTime+0.26);
+  }
+  function thankq(){
+    if(!enabled) return;
+    const utter = new SpeechSynthesisUtterance('thank q');
+    utter.rate = 1.1; utter.pitch = 1.1; speechSynthesis.speak(utter);
+  }
+  function ocean(start=true){
+    if(!enabled) return;
+    if (start && !oceanNode){
+      // make pink-ish noise
+      const size=2**15, buf=ctx.createBuffer(1,size,ctx.sampleRate), data=buf.getChannelData(0);
+      let b0=0,b1=0,b2=0,b3=0,b4=0,b5=0,b6=0;
+      for(let i=0;i<size;i++){ const white=Math.random()*2-1;
+        b0=0.99886*b0+white*0.0555179; b1=0.99332*b1+white*0.0750759; b2=0.96900*b2+white*0.1538520;
+        b3=0.86650*b3+white*0.3104856; b4=0.55000*b4+white*0.5329522; b5=-0.7616*b5-white*0.0168980;
+        let out=b0+b1+b2+b3+b4+b5+b6+white*0.5362; out*=0.08; b6=white*0.115926; data[i]=out;
+      }
+      oceanNode=ctx.createBufferSource(); oceanNode.buffer=buf; oceanNode.loop=true;
+      oceanGain=ctx.createGain(); oceanGain.gain.value=0.18;
+      oceanNode.connect(oceanGain).connect(ctx.destination); oceanNode.start();
+    }
+  }
+  async function toggle(on){
+    enabled = on ?? !enabled;
+    if (enabled) { await ctx.resume(); ocean(true); }
+    else { ctx.suspend(); }
+    return enabled;
+  }
+  return {pop,sip,thankq,toggle};
+})();
+document.getElementById('sound').addEventListener('click', async ()=>{
+  const on = await FX.toggle();
+  document.getElementById('sound').textContent = on ? '🔊 Sound' : '🔇 Sound';
+});
+
+/* ===== Game (from earlier — now with photo avatar + sounds) ===== */
+(() => {
+  const DAY_SECONDS = 120;
+  const WORLD = { w: 960, h: 540 };
+  const PLAYER = { r: 16, speed: 2.4, x: WORLD.w*0.5, y: WORLD.h*0.7 };
+  const TOWEL = { x: WORLD.w*0.78, y: WORLD.h*0.72, w: 120, h: 70 };
+  const AREAS = { grass:{ y:WORLD.h*0.02, h:WORLD.h*0.18 }, water:{ y:WORLD.h*0.20, h:WORLD.h*0.22 }, sand:{ y:WORLD.h*0.42, h:WORLD.h*0.58 } };
+  const LOOT_TYPES = [
+    { key:'coffee', emoji:'☕️', name:'cof cof', score:6, sleep:-35, followers:0, spawn:1.0, s:'sip' },
+    { key:'coke',   emoji:'🥤', name:'coky coke', score:5, sleep:-10, followers:0, spawn:0.9, s:'pop' },
+    { key:'sush',   emoji:'🍣', name:'sush', score:6, sleep:-5, followers:0, spawn:0.9, s:'pop' },
+    { key:'cheese', emoji:'🧀', name:'cheese', score:7, sleep:0, followers:0, spawn:0.75, s:'pop' },
+    { key:'wine',   emoji:'🍷', name:'wine', score:7, sleep:+6, followers:0, spawn:0.7, s:'pop' },
+    { key:'zoopy',  emoji:'🍧', name:'Zoopy Doopy', score:8, sleep:+2, followers:0, spawn:0.8, s:'pop' },
+    { key:'cam',    emoji:'📱', name:'TikTok idea', score:0, sleep:0, followers:+15, spawn:0.65, s:'pop' },
+  ];
+  const MAX_SLEEP = 100, SLEEP_RATE=0.015, NAP_RATE=0.65;
+  const MOBILE = /iPhone|Android|iPad|Mobile/i.test(navigator.userAgent);
+
+  let c = document.getElementById('canvas'), ctx = c.getContext('2d');
+  let keys={up:false,down:false,left:false,right:false,nap:false,post:false};
+  let tStart=performance.now(), timeLeft=DAY_SECONDS, sleep=28, score=0, followers=0, coffees=0;
+  let loot=[], camIdeas=0, running=true, avatarImg=null;
+
+  function setFill(id,pct){ document.getElementById(id).style.width = Math.max(0,Math.min(100,pct)) + '%'; }
+  const $score=v=>document.getElementById('score').textContent=v|0;
+  const $followers=v=>document.getElementById('followers').textContent=v|0;
+  const $coffee=v=>document.getElementById('coffee').textContent=v|0;
+
+  // load avatar for rendering inside player head
+  (function(){
+    const img=document.getElementById('avatar');
+    const i=new Image(); i.crossOrigin='anonymous';
+    i.onload=()=>avatarImg=i; i.src=img.getAttribute('src');
+  })();
+
+  // input
+  addEventListener('keydown', e=>{
+    const k=e.key.toLowerCase();
+    if(['arrowup','w'].includes(e.key)) keys.up=true;
+    if(['arrowdown','s'].includes(e.key)) keys.down=true;
+    if(['arrowleft','a'].includes(e.key)) keys.left=true;
+    if(['arrowright','d'].includes(e.key)) keys.right=true;
+    if(k===' '){ keys.nap=true; e.preventDefault(); }
+    if(k==='e'){ keys.post=true; }
+  });
+  addEventListener('keyup', e=>{
+    const k=e.key.toLowerCase();
+    if(['arrowup','w'].includes(e.key)) keys.up=false;
+    if(['arrowdown','s'].includes(e.key)) keys.down=false;
+    if(['arrowleft','a'].includes(e.key)) keys.left=false;
+    if(['arrowright','d'].includes(e.key)) keys.right=false;
+    if(k===' ') keys.nap=false;
+    if(k==='e') keys.post=false;
+  });
+  document.querySelectorAll('[data-press]').forEach(btn=>{
+    const a=btn.getAttribute('data-press'); const set=v=>keys[a]=v;
+    btn.addEventListener('touchstart', e=>{e.preventDefault(); set(true);});
+    btn.addEventListener('touchend', ()=>set(false));
+    btn.addEventListener('mousedown', ()=>set(true));
+    btn.addEventListener('mouseup', ()=>set(false));
+    btn.addEventListener('mouseleave', ()=>set(false));
+  });
+
+  function clamp(v,a,b){return Math.max(a,Math.min(b,v));}
+  function dist(ax,ay,bx,by){return Math.hypot(ax-bx,ay-by);}
+
+  function spawnLoot(){
+    if(Math.random()<0.04){
+      const t = weighted(LOOT_TYPES, x=>x.spawn);
+      const x = 40 + Math.random()*(WORLD.w-80);
+      const y = AREAS.sand.y + 40 + Math.random()*(AREAS.sand.h-120);
+      loot.push({t,x,y,r:16,pulse:Math.random()*Math.PI*2});
+    }
+  }
+  function weighted(arr,fn){let s=arr.reduce((a,b)=>a+fn(b),0), r=Math.random()*s, a=0; for(const it of arr){a+=fn(it); if(r<=a) return it;} return arr[0];}
+
+  function step(now){
+    if(!running) return;
+    const dt=(now - tStart)/1000; tStart=now;
+    timeLeft -= dt; if(timeLeft<=0) return endDay();
+
+    // Movement (sleepy = slower)
+    const slow = 1 - Math.min(0.55, sleep/MAX_SLEEP*0.45);
+    const sp = PLAYER.speed * (MOBILE?1.05:1) * slow;
+    let vx=(keys.right?-1:0)+(keys.left?1:0); vx*=-1;
+    let vy=(keys.down?-1:0)+(keys.up?1:0); vy*=-1;
+    if(vx||vy){ const d=Math.hypot(vx,vy); PLAYER.x+=sp*(vx/d||0)*3; PLAYER.y+=sp*(vy/d||0)*3; }
+    PLAYER.x=clamp(PLAYER.x,20,WORLD.w-20);
+    PLAYER.y=clamp(PLAYER.y,AREAS.water.y+AREAS.water.h+10,WORLD.h-20);
+
+    // Sleepiness
+    sleep = clamp(sleep + 100*0.015*dt, 0, MAX_SLEEP);
+    const onTowel = (PLAYER.x>TOWEL.x-TOWEL.w/2 && PLAYER.x<TOWEL.x+TOWEL.w/2 && PLAYER.y>TOWEL.y-TOWEL.h/2 && PLAYER.y<TOWEL.y+TOWEL.h/2);
+    if(onTowel && keys.nap){ sleep = clamp(sleep - 100*0.65*dt, 0, MAX_SLEEP); score+=0.6; }
+
+    // Spawn & collect
+    spawnLoot();
+    for(let i=loot.length-1;i>=0;i--){
+      const it=loot[i];
+      if(dist(PLAYER.x,PLAYER.y,it.x,it.y) <= (PLAYER.r+it.r)){
+        score+=it.t.score; sleep=clamp(sleep + it.t.sleep,0,MAX_SLEEP);
+        followers+=Math.max(0,it.t.followers);
+        if(it.t.key==='coffee'){coffees++; FX.sip();}
+        else FX.pop();
+        if(it.t.key==='cam') camIdeas++;
+        loot.splice(i,1);
+      }
+    }
+    if(keys.post && camIdeas>0){
+      const boost = 20 + Math.round(Math.random()*25);
+      followers+=boost; score+=12; camIdeas--; keys.post=false;
+      // 1 in 3 chance to say "thank q"
+      if(Math.random()<0.34) FX.thankq();
+    }
+
+    // UI
+    document.getElementById('time').textContent=Math.ceil(timeLeft);
+    $score(score); $followers(followers); $coffee(coffees);
+    setFill('scoreFill', Math.min(100,(score/200)*100));
+    setFill('folFill', Math.min(100,(followers/200)*100));
+    setFill('sleepFill',(sleep/MAX_SLEEP)*100);
+
+    draw(onTowel);
+    requestAnimationFrame(step);
+  }
+
+  function draw(onTowel){
+    ctx.clearRect(0,0,WORLD.w,WORLD.h);
+    // sea foam
+    ctx.fillStyle='rgba(255,255,255,0.35)';
+    for(let i=0;i<9;i++){
+      const y=AREAS.water.y+AREAS.water.h-6 + Math.sin(performance.now()/900+i)*3;
+      ctx.fillRect(i*120, y, 100, 3);
+    }
+    // towel
+    ctx.save(); ctx.translate(TOWEL.x,TOWEL.y);
+    roundedRect(-TOWEL.w/2,-TOWEL.h/2,TOWEL.w,TOWEL.h,12,'#ffffffcc');
+    ctx.strokeStyle='#ff6ba9'; ctx.lineWidth=3; ctx.strokeRect(-TOWEL.w/2+6,-TOWEL.h/2+6,TOWEL.w-12,TOWEL.h-12);
+    ctx.restore();
+    // loot
+    loot.forEach(it=>{
+      it.pulse+=0.06; ctx.font='26px system-ui, Apple Color Emoji'; ctx.textAlign='center'; ctx.textBaseline='middle';
+      ctx.globalAlpha=0.85 + Math.sin(it.pulse)*0.1; ctx.fillText(it.t.emoji,it.x,it.y); ctx.globalAlpha=1;
+    });
+    // player head (with avatar in a circle)
+    const r=PLAYER.r;
+    if(avatarImg){
+      ctx.save();
+      ctx.beginPath(); ctx.arc(PLAYER.x,PLAYER.y,r,0,Math.PI*2); ctx.closePath(); ctx.clip();
+      ctx.drawImage(avatarImg, PLAYER.x-r, PLAYER.y-r, r*2, r*2);
+      ctx.restore();
+      // outline
+      ctx.strokeStyle='#2e3a48'; ctx.lineWidth=1.2; ctx.beginPath(); ctx.arc(PLAYER.x,PLAYER.y,r,0,Math.PI*2); ctx.stroke();
+    } else {
+      // simple emoji fallback
+      ctx.font='22px system-ui, Apple Color Emoji'; ctx.textAlign='center'; ctx.textBaseline='middle';
+      ctx.fillText('😊', PLAYER.x, PLAYER.y);
+    }
+    // hint
+    ctx.font='14px system-ui, -apple-system'; ctx.fillStyle='#00000088'; ctx.textAlign='center';
+    if(onTowel) ctx.fillText('💤 Hold Nap to power-rest (the ushe)', PLAYER.x, PLAYER.y - 26);
+  }
+  function roundedRect(x,y,w,h,r,color){
+    ctx.fillStyle=color; ctx.beginPath();
+    ctx.moveTo(x+r,y);
+    ctx.arcTo(x+w,y,x+w,y+h,r);
+    ctx.arcTo(x+w,y+h,x,y+h,r);
+    ctx.arcTo(x,y+h,x,y,r);
+    ctx.arcTo(x,y,x+w,y,r);
+    ctx.closePath(); ctx.fill();
+  }
+
+  function endDay(){
+    running=false;
+    try{ const best=+localStorage.getItem('g_sea_best')||0; if(score>best) localStorage.setItem('g_sea_best', String(score|0)); }catch{}
+    document.getElementById('mScore').textContent=score|0;
+    document.getElementById('mFol').textContent=followers|0;
+    document.getElementById('mCof').textContent=coffees|0;
+    const quips=['ushe','Zoopy Doopy','dunzo','cof cof','malk','tootsies','stompers','thank q','Sush','wuv'];
+    document.getElementById('mQuips').textContent = pick3(quips).map(q=>`“${q}”`).join(', ');
+    document.getElementById('modal').style.display='flex';
+    const msg=`Georgia's day in Coogee: ${score|0} Good-Times and ${followers|0} followers! #Georgiaisms`;
+    document.getElementById('share').href=`https://twitter.com/intent/tweet?text=${encodeURIComponent(msg)}`;
+  }
+  function pick3(list){const s=new Set(); while(s.size<3) s.add(list[Math.floor(Math.random()*list.length)]); return [...s];}
+  document.getElementById('again').addEventListener('click', ()=>{
+    loot.length=0; score=0; followers=0; coffees=0; camIdeas=0; sleep=28; timeLeft=DAY_SECONDS;
+    PLAYER.x=WORLD.w*0.5; PLAYER.y=WORLD.h*0.7;
+    document.getElementById('modal').style.display='none';
+    running=true; tStart=performance.now(); requestAnimationFrame(step);
+  });
+
+  // start loop
+  requestAnimationFrame(step);
+
+  // desktop tip
+  if (!MOBILE) {
+    const tip=document.createElement('div');
+    tip.textContent='Controls: WASD/Arrow keys to move • Space = Nap • E = Post TikTok';
+    tip.style.cssText='position:fixed;left:50%;transform:translateX(-50%);bottom:92px;background:#000a;color:#fff;padding:8px 12px;border-radius:10px;font-size:12px;box-shadow:0 6px 16px #0005';
+    document.body.appendChild(tip); setTimeout(()=>tip.remove(), 3800);
+  }
+})();
+</script>
+</body>
+</html>
